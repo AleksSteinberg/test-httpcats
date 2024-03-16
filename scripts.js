@@ -9,12 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const firstVisit = lastErrors.length === 0;
 
     if (firstVisit) {
-        lastErrors = ['404'];
-        lastSection.classList.remove('show');
+      lastErrors = ['404'];
+      lastSection.classList.remove('show');
     } else {
-        lastSection.classList.add('show');
-        const index404 = lastErrors.indexOf('404');
-        if (index404 !== -1) lastErrors.splice(index404, 1);
+      lastSection.classList.add('show');
+      const index404 = lastErrors.indexOf('404');
+      if (index404 !== -1) lastErrors.splice(index404, 1);
     }
 
     updateLastErrors();
@@ -22,26 +22,41 @@ document.addEventListener('DOMContentLoaded', function() {
     catImage.src = "https://http.cat/" + lastErrors[0];
 
     inputField.addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') loadImage();
+      if (event.key === 'Enter') loadImage();
     });
 
     loadButton.addEventListener('click', loadImage);
 
     function loadImage() {
-        const errorCode = inputField.value.trim();
-        if (errorCode === '') return alert("Введите код ошибки");
+      const errorCode = inputField.value.trim();
+      if (errorCode === '') return alert("Введите код ошибки");
 
-        catImage.src = "https://http.cat/" + errorCode;
-        catImage.onload = function() {
-            counter.textContent = errorCode;
-            lastErrors.unshift(errorCode);
-            lastErrors = lastErrors.slice(0, 5);
-            localStorage.setItem('lastErrors', JSON.stringify(lastErrors));
-            updateLastErrors();
-            if (!lastSection.classList.contains('show')) lastSection.classList.add('show');
-        };
-        catImage.onerror = function() { alert("Нет котика для этого кода ошибки :("); };
+      fetch("https://http.cat/" + errorCode,)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Error fetching cat image");
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          catImage.src = url;
+        })
+        .catch(error => {
+          alert("Нет котика для этого кода ошибки :(");
+        });
+
+      catImage.onload = function() {
+        counter.textContent = errorCode;
+        lastErrors.unshift(errorCode);
+        lastErrors = lastErrors.slice(0, 5);
+        localStorage.setItem('lastErrors', JSON.stringify(lastErrors));
+        updateLastErrors();
+        if (!lastSection.classList.contains('show')) lastSection.classList.add('show');
+      };
     }
 
-    function updateLastErrors() { counter.textContent = lastErrors.join(', '); }
-});
+    function updateLastErrors() {
+      counter.textContent = lastErrors.join(', ');
+    }
+  });
